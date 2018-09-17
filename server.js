@@ -30,7 +30,7 @@ app.use(express.static("public"));
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
 mongoose.Promise = Promise;
-mongoose.connect(MONGODB_URI);
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
 //Routes
 app.get("/scrape", function(req, res) {
@@ -47,16 +47,39 @@ app.get("/scrape", function(req, res) {
     result.link = $(this)
     .children("a")
     .attr("href");
-    result.text = $(this)
-    .children("div")
-    .attr(".news-post-content");
+    // result.text = $(this)
+    // .children("div")
+    // .attr(".news-post-content");
 
-        db.Article.create(result).then (function(dbArticle) {
+        db.Article.create(result)
+        .then (function(dbArticle) {
+
             console.log(dbArticle);
+
         }).catch(function(err) {
+
             return res.json(err);
+
         });
     });
     res.send("Scrape Complete");
     });
 });
+
+app.get("/articles", function(req, res) {
+    // Grab every document in the Articles collection
+    db.Article.find({})
+      .then(function(dbArticle) {
+        // If we were able to successfully find Articles, send them back to the client
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        // If an error occurred, send it to the client
+        res.json(err);
+      });
+  });
+
+// Start the server
+app.listen(PORT, function() {
+    console.log("App running on port " + PORT + "!");
+  });
