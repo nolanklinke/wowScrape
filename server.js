@@ -33,10 +33,12 @@ mongoose.Promise = Promise;
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
 //Routes
+//root route
 app.get("/", function(req, res) {
     res.send(index.html);
   });
 
+//route to scrape wowhead website
 app.get("/scrape", function(req, res) {
     axios.get("https://www.wowhead.com/").then(function(response) {
 
@@ -67,15 +69,13 @@ app.get("/scrape", function(req, res) {
     });
 });
 
+//route to get all articles
 app.get("/articles", function(req, res) {
-    // Grab every document in the Articles collection
     db.Article.find({})
       .then(function(dbArticle) {
-        // If we were able to successfully find Articles, send them back to the client
         res.json(dbArticle);
       })
       .catch(function(err) {
-        // If an error occurred, send it to the client
         res.json(err);
       });
   });
