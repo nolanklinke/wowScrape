@@ -35,8 +35,12 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 //Routes
 //root route
 app.get("/", function(req, res) {
-    res.send(index.html);
-  });
+  res.send(index.html);
+});
+
+app.get("/savedTest", function(req, res) {
+  res.send(saved.html);
+});
 
 //route to scrape wowhead website
 app.get("/scrape", function(req, res) {
