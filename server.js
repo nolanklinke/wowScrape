@@ -49,28 +49,33 @@ app.get("/scrape", function(req, res) {
     const $ = cheerio.load(response.data);
 
     $(".news-post").each(function(i, element) {
-        const result = {};
+      const result = {};
 
-    result.title = $(this).find("h1").children("a").text();
+      result.title = $(this).find("h1").children("a").text();
 
-    result.link = $(this).find("h1").children("a").attr("href");
+      result.link = $(this).find("h1").children("a").attr("href");
 
-    result.snippet = $(this).find(".news-post-content").children("noscript").text().trim();
+      result.snippet = $(this).find(".news-post-content").children("noscript").text().trim();
 
+      db.Article.findOne({ title: result.title}).then(function(dbArticle) {
+        if (dbArticle) {
+          console.log("Article already in database!");
+        } else {
+          db.Article.create(result)
+              .then (function(dbArticle) {
 
-        db.Article.create(result)
-        .then (function(dbArticle) {
+                  console.log(dbArticle);
 
-            console.log(dbArticle);
+              }).catch(function(err) {
 
-        }).catch(function(err) {
+                  return res.json(err);
 
-            return res.json(err);
-
-        });
+              });
+        }
+      });   
     });
     res.send("Scrape Complete");
-    });
+  });
 });
 
 //route to get all articles
