@@ -33,23 +33,24 @@ mongoose.Promise = Promise;
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
 //Routes
+app.get("/", function(req, res) {
+    res.send(index.html);
+  });
+
 app.get("/scrape", function(req, res) {
     axios.get("https://www.wowhead.com/").then(function(response) {
 
     const $ = cheerio.load(response.data);
 
-    $("h1.heading-size-1").each(function(i, element) {
+    $(".news-post").each(function(i, element) {
         const result = {};
 
-    result.title = $(this)
-    .children("a")
-    .text();
-    result.link = $(this)
-    .children("a")
-    .attr("href");
-    // result.text = $(this)
-    // .children("div")
-    // .attr(".news-post-content");
+    result.title = $(this).find("h1").children("a").text();
+
+    result.link = $(this).find("h1").children("a").attr("href");
+
+    result.snippet = $(this).find(".news-post-content").children("noscript").text().trim();
+
 
         db.Article.create(result)
         .then (function(dbArticle) {
@@ -75,6 +76,75 @@ app.get("/articles", function(req, res) {
       })
       .catch(function(err) {
         // If an error occurred, send it to the client
+        res.json(err);
+      });
+  });
+
+//route to populate article with note
+app.get("/articles/:id", function(req, res) {
+
+    db.Article
+      .findOne({ _id: req.params.id })
+      .populate("note")
+      .then(function(dbArticle) {
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        res.json(err);
+      });
+  });
+
+// update or create note
+app.post("/articles/:id", function(req, res) {
+
+    db.Note
+      .create(req.body)
+      .then(function(dbNote) {
+        return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
+      })
+      .then(function(dbArticle) {
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        res.json(err);
+      });
+  });
+
+// save article
+app.put("/saved/:id", function(req, res) {
+
+    db.Article
+      .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: true }})
+      .then(function(dbArticle) {
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        res.json(err);
+      });
+  });
+
+//getting all saved articles
+app.get("/saved", function(req, res) {
+
+    db.Article
+      .find({ isSaved: true })
+      .then(function(dbArticle) {
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        res.json(err);
+      });
+  });
+
+// delete articles from saved section
+app.put("/delete/:id", function(req, res) {
+
+    db.Article
+      .findByIdAndUpdate({ _id: req.params.id }, { $set: { isSaved: false }})
+      .then(function(dbArticle) {
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
         res.json(err);
       });
   });
